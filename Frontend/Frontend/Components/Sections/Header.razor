@@ -1,0 +1,50 @@
+﻿
+<header>
+    <div class="container">
+        <a id="logo" href=""><img src="/images/silicon-logo-light_mode.svg" alt=""></a>
+
+        <div id="menu">
+            <nav>
+                <NavLink class="menu-link" href="" Match="NavLinkMatch.All">Overview</NavLink>
+                <NavLink class="menu-link" href="/#features">Features</NavLink>
+               
+                <AuthorizeView>
+                    <Authorized>
+                        <NavLink class="menu-link" href="/courses">Courses</NavLink>
+                    </Authorized>
+                </AuthorizeView>
+                    
+                
+                <NavLink class="menu-link" href="/contacts">Contact</NavLink>
+
+            </nav>
+        </div>
+
+        <div class="btn-switch">
+            <label class="switch" for="switch-mode">
+                <input type="checkbox" id="switch-mode" />
+                <div class="slider round"></div>
+            </label>
+            <label>Dark</label>
+        </div>
+
+        <div class="account-buttons">
+
+            <AuthorizeView>
+                <Authorized>
+                    <a class="btn-theme" href="/signout"><img src="/images/icon-signin.svg"><span>Sign out</span></a>
+                    <a class="btn-gray" href="/account/details"><img src="/images/icon-user.svg"><span>Account</span></a>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="btn-theme" href="/signin"><img src="/images/icon-signin.svg"><span>Sign in</span></a>
+                    <a class="btn-gray" href="/signup"><img src="/images/icon-user.svg"><span>Sign up</span></a>
+                </NotAuthorized>
+            </AuthorizeView>
+
+
+
+
+        </div>
+
+    </div>
+</header>

@@ -1,0 +1,86 @@
+﻿@page "/courses"
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<PageTitle>Courses</PageTitle>
+
+<section class="courses">
+    <div class="container">
+        <h1>Courses</h1>
+        <div class="course-list">
+
+            @if (courses == null)
+            {
+                <p>No courses found</p>
+            }
+            else
+            {
+                @foreach (var course in courses)
+                {
+                    <div class="course">
+                        @if (course.IsBestseller)
+                        {
+                            <div class="best-seller">Best Seller</div>
+                        }
+                        <img class="course-image" src="~/images/@course.ImageName" />
+                        <div class="content">
+                            <h2 class="course-title">@course.Title</h2>
+                            <div class="course-author">by @course.Author</div>
+                            <div class="course-prices">
+                                @if (!string.IsNullOrEmpty(course.DiscountPrice))
+                                {
+                                    <div class="discount-price">$@course.DiscountPrice</div>
+                                }
+
+                                <div class="original-price">$@course.OriginalPrice</div>
+                            </div>
+                            <div class="course-footer">
+                                <div class="course-hours">@course.Hours hours</div>
+                                <div class="course-likes">
+                                    <i class="fa-regular fa-thumbs-up"></i> @course.LikesInProcent (@course.LikesInNumbers)
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                }
+            }
+
+            
+        </div>
+    </div>
+</section>
+
+@code {
+    private CourseModel[]? courses;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+            courses = await Http.GetFromJsonAsync<CourseModel[]>("courseprovider-win23jsbackend-felixsten.azurewebsites.net/api/courses"); 
+        }
+        catch (Exception ex) { }
+
+
+    }
+
+    private class CourseModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = null!;
+        public string? ImageName { get; set; }
+        public string? Author { get; set; }
+        public bool IsBestseller { get; set; }
+        public string Hours { get; set; } = null!;
+        public string OriginalPrice { get; set; } = null!;
+        public string DiscountPrice { get; set; } = null!;
+        public string LikesInProcent { get; set; } = null!;
+        public string LikesInNumbers { get; set; } = null!;
+    }
+}

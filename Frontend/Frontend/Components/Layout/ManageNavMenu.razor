@@ -1,0 +1,23 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Frontend.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+
+@rendermode InteractiveAuto
+
+<nav>
+    <NavLink href="/account/details" class="btn-theme"><span>Account details</span></NavLink>
+    <NavLink @onclick="HandleSignOut" class="btn-gray"><span>Sign out</span></NavLink>
+</nav>
+
+
+@code {
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private async Task HandleSignOut()
+    {
+        await SignInManager.SignOutAsync();
+    }
+}
