@@ -10,12 +10,9 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ApplicationDbContext DbContext
 
+<PageTitle>Notifications</PageTitle>
 
-
-<PageTitle>Profile</PageTitle>
-
-<h3>Profile</h3>
-
+<h3>Notifications</h3>
 
 <div id="detailspage">
     <div class="container">
@@ -37,42 +34,33 @@
 
         <section id="newsletter">
             <div class="container">
-                <EditForm Model="Input" OnValidSubmit="OnValidSubmitNewsletterAsync">
+                <EditForm Model="Input" OnValidSubmit="OnValidSubmitNewsletterAsync" FormName="newsletterForm">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
 
                     <div class="form-group">
                         <label for="email">Enter email to subscribe to newsletter</label>
-                        <InputText @bind-Value="Input.Email" id="email" class="form-control" />
+                        <InputText type="email" id="email" @bind-Value="Input.Email" class="form-control" />
                         <ValidationMessage For="() => Input.Email" />
                     </div>
 
                     <button class="btn-theme-s" type="submit">Subscribe to news</button>
                 </EditForm>
 
-                @if (subscriptionStatus != null)
-                {
-                    <div class="alert @subscriptionStatus.CssClass">@subscriptionStatus.Message</div>
-                }
             </div>
         </section>
-
     </div>
 </div>
-
-
-
-
 
 @code {
     private ApplicationUser user = default!;
     private string? username;
     private string? phoneNumber;
-    private SubscriptionStatus? subscriptionStatus;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
+    [SupplyParameterFromForm]
     private SubscriberInput Input { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -84,51 +72,31 @@
 
     private async Task OnValidSubmitNewsletterAsync()
     {
+
         try
         {
-            var existingSubscriber = await DbContext.Subscribers.FirstOrDefaultAsync(s => s.Email == Input.Email);
-            if (existingSubscriber != null)
+            if (!string.IsNullOrWhiteSpace(Input.Email))
             {
-                subscriptionStatus = new SubscriptionStatus
-                    {
-                        Message = "You are already subscribed!",
-                        CssClass = "alert-info"
-                    };
-            }
-            else
-            {
-                var subscriber = new SubscriberEntity { Email = Input.Email! };
-                await DbContext.Subscribers.AddAsync(subscriber);
-                await DbContext.SaveChangesAsync();
 
-                subscriptionStatus = new SubscriptionStatus
-                    {
-                        Message = "Successfully subscribed!",
-                        CssClass = "alert-success"
-                    };
+                    var subscriber = new SubscriberEntity { Email = Input.Email };
+                    await DbContext.Subscribers.AddAsync(subscriber);
+                    await DbContext.SaveChangesAsync();
+
+
+                
             }
         }
         catch (Exception ex)
         {
-            subscriptionStatus = new SubscriptionStatus
-                {
-                    Message = $"An error occurred: {ex.Message}",
-                    CssClass = "alert-danger"
-                };
+            Console.WriteLine($"Error occured while subscribing");
         }
     }
 
-    private sealed class SubscriberInput
+    private class SubscriberInput
     {
-        [Required]
-        [EmailAddress]
+
         [Display(Name = "Email")]
         public string? Email { get; set; }
     }
 
-    private class SubscriptionStatus
-    {
-        public string Message { get; set; } = string.Empty;
-        public string CssClass { get; set; } = string.Empty;
-    }
 }

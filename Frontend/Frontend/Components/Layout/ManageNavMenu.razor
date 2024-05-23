@@ -1,13 +1,16 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@namespace Frontend.Components.Layout
+
+@using Microsoft.AspNetCore.Identity
 @using Frontend.Data
 
 @inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
 
 @rendermode InteractiveAuto
 
 <nav>
     <NavLink href="/account/details" class="btn-theme"><span>Account details</span></NavLink>
-    <NavLink @onclick="HandleSignOut" class="btn-gray"><span>Sign out</span></NavLink>
+    <button @onclick="HandleSignOut" class="btn-gray"><span>Sign out</span></button>
     <NavLink href="/notifications" class="btn-gray"><span>Notifications</span></NavLink>
 </nav>
 
@@ -17,8 +20,18 @@
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
+
+
     private async Task HandleSignOut()
     {
-        await SignInManager.SignOutAsync();
+        try
+        {
+            await SignInManager.SignOutAsync();
+            NavigationManager.NavigateTo("/signin");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error signing out: {ex.Message}");
+        }
     }
 }
