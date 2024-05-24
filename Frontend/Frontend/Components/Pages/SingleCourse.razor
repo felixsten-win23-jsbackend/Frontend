@@ -1,0 +1,47 @@
+﻿@page "/course/"
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<PageTitle>Course</PageTitle>
+
+<section class="course">
+    <div class="container">
+        <h1>Course</h1>
+        
+            
+
+
+        
+    </div>
+</section>
+
+@code {
+    private CourseModel[]? courses;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+            courses = await Http.GetFromJsonAsync<CourseModel[]>(Environment.GetEnvironmentVariable("COURSES_URI"));
+        }
+        catch (Exception ex) { }
+
+
+    }
+
+    private class CourseModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = null!;
+        public string? ImageName { get; set; }
+        public string? Author { get; set; }
+        public bool IsBestseller { get; set; }
+        public string Hours { get; set; } = null!;
+        public string OriginalPrice { get; set; } = null!;
+        public string DiscountPrice { get; set; } = null!;
+        public string LikesInProcent { get; set; } = null!;
+        public string LikesInNumbers { get; set; } = null!;
+    }
+}

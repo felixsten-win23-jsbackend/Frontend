@@ -10,15 +10,21 @@
 
 <nav>
     <NavLink href="/account/details" class="btn-theme"><span>Account details</span></NavLink>
-    <button @onclick="HandleSignOut" class="btn-gray"><span>Sign out</span></button>
+
+    <NavLink href="/account/logout" class="btn-gray"><span>Sign out</span></NavLink>
     <NavLink href="/notifications" class="btn-gray"><span>Notifications</span></NavLink>
 </nav>
 
 
 @code {
 
+    private string currentUrl => NavigationManager.Uri;
+
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
+
+
+
 
 
 
