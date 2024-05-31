@@ -9,6 +9,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ApplicationDbContext DbContext
+@inject HttpClient Http
 
 <PageTitle>Notifications</PageTitle>
 
@@ -47,6 +48,10 @@
                     <button class="btn-theme-s" type="submit">Subscribe to news</button>
                 </EditForm>
 
+                <NavLink href="/unsubscribe" class="btn-gray"><span>Unsubscribe page</span></NavLink>
+
+
+
             </div>
         </section>
     </div>
@@ -63,40 +68,46 @@
     [SupplyParameterFromForm]
     private SubscriberInput Input { get; set; } = new();
 
+
+
+
+
     protected override async Task OnInitializedAsync()
     {
         user = await UserManager.GetUserAsync(HttpContext.User) ?? null!;
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+
+
+
     }
 
     private async Task OnValidSubmitNewsletterAsync()
     {
-
         try
         {
             if (!string.IsNullOrWhiteSpace(Input.Email))
             {
-
-                    var subscriber = new SubscriberEntity { Email = Input.Email };
-                    await DbContext.Subscribers.AddAsync(subscriber);
-                    await DbContext.SaveChangesAsync();
-
-
-                
+                var subscriber = new SubscriberEntity { Email = Input.Email };
+                await DbContext.Subscribers.AddAsync(subscriber);
+                await DbContext.SaveChangesAsync();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error occured while subscribing");
+            Console.WriteLine($"Error occurred while subscribing: {ex.Message}");
         }
     }
 
+   
+
     private class SubscriberInput
     {
-
         [Display(Name = "Email")]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
         public string? Email { get; set; }
     }
+
 
 }

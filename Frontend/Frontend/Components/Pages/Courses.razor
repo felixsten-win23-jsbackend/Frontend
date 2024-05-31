@@ -1,7 +1,8 @@
 ﻿@page "/courses"
+@using System.Text.Json
+@using Frontend.Data.Models
 @attribute [StreamRendering]
 @attribute [Authorize]
-
 
 <PageTitle>Courses</PageTitle>
 
@@ -18,69 +19,90 @@
             {
                 @foreach (var course in courses)
                 {
-                    <div class="course">
+                    var link = $"courses/details/{course.Id}";
+                    <a class="course" href="@link">
                         @if (course.IsBestseller)
                         {
                             <div class="best-seller">Best Seller</div>
                         }
-                        <img class="course-image" src="~/images/@course.ImageName" />
+                        <img src="@course.ImageUri" alt="@course.Title" />
                         <div class="content">
                             <h2 class="course-title">@course.Title</h2>
-                            <div class="course-author">by @course.Author</div>
-                            <div class="course-prices">
-                                @if (!string.IsNullOrEmpty(course.DiscountPrice))
-                                {
-                                    <div class="discount-price">$@course.DiscountPrice</div>
-                                }
-
-                                <div class="original-price">$@course.OriginalPrice</div>
-                            </div>
                             <div class="course-footer">
                                 <div class="course-hours">@course.Hours hours</div>
                                 <div class="course-likes">
                                     <i class="fa-regular fa-thumbs-up"></i> @course.LikesInProcent (@course.LikesInNumbers)
-
                                 </div>
-
                             </div>
-
                         </div>
-
-                    </div>
+                    </a>
                 }
             }
 
-            
         </div>
     </div>
 </section>
 
 @code {
-    private CourseModel[]? courses;
+    private List<CourseCardModel>? courses;
 
     protected override async Task OnInitializedAsync()
     {
+        var query = new GraphQLQuery
+            {
+                Query = @"{
+                getCourses {
+                    id
+                    isBestseller
+                    imageUri
+                    isDigital
+                    categories
+                    title
+                    ingress
+                    starRating
+                    reviews
+                    likesInProcent
+                    likes
+                    hours
+                }
+            }"
+            };
 
         try
         {
-            courses = await Http.GetFromJsonAsync<CourseModel[]>(Environment.GetEnvironmentVariable("COURSES_URI"));
+            var response = await Http.PostAsJsonAsync("https://courseprovider-jsbackend.azurewebsites.net/api/graphql?", query);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<DynamicGraphQLResponse>();
+
+                if (result != null && result.Data.TryGetProperty("getCourses", out var coursesArray))
+                {
+                    courses = coursesArray.EnumerateArray()
+                        .Select(course => new CourseCardModel
+                            {
+                                Id = course.GetProperty("id").GetString(),
+                                IsBestseller = course.GetProperty("isBestseller").GetBoolean(),
+                                ImageUri = course.GetProperty("imageUri").GetString(),
+                                Title = course.GetProperty("title").GetString(),
+                                Hours = course.GetProperty("hours").GetString(),
+                                LikesInProcent = course.GetProperty("likesInProcent").GetString(),
+                                LikesInNumbers = course.GetProperty("likes").GetString()
+                            })
+                        .ToList();
+                }
+            }
+            else
+            {
+                
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error fetching courses: {response.StatusCode}, {responseContent}");
+            }
         }
-        catch (Exception ex) { }
-
-
-    }
-
-    private class CourseModel
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = null!;
-        public string? ImageName { get; set; }
-        public string? Author { get; set; }
-        public bool IsBestseller { get; set; }
-        public string Hours { get; set; } = null!;
-        public string OriginalPrice { get; set; } = null!;
-        public string DiscountPrice { get; set; } = null!;
-        public string LikesInProcent { get; set; } = null!;
-        public string LikesInNumbers { get; set; } = null!;
+        catch (Exception ex)
+        {
+            
+            Console.WriteLine($"Exception while fetching courses: {ex.Message}");
+        }
     }
 }

@@ -1,47 +1,105 @@
-﻿@page "/course/"
+﻿@page "/courses/details/{Id}"
 @attribute [StreamRendering]
 @attribute [Authorize]
 
+@inject HttpClient Http
 
 <PageTitle>Course</PageTitle>
 
 <section class="course">
     <div class="container">
-        <h1>Course</h1>
-        
-            
-
-
-        
+        @if (course == null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <div class="course-details">
+                @if (course.IsBestseller)
+                {
+                    <div class="best-seller">Best Seller</div>
+                }
+                <img src="@course.ImageUri" alt="@course.Title" />
+                <div class="content">
+                    <h2 class="course-title">@course.Title</h2>
+                    <div class="course-description">@course.Ingress</div>
+                    <div class="course-footer">
+                        <div class="course-hours">@course.Hours hours</div>
+                        <div class="course-likes">
+                            <i class="fa-regular fa-thumbs-up"></i> @course.LikesInProcent (@course.LikesInNumbers)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </section>
 
 @code {
-    private CourseModel[]? courses;
+
+    [Parameter] public string Id { get; set; }
+
+    private CourseModel? course;
 
     protected override async Task OnInitializedAsync()
     {
+        var query = new GraphQLRequest
+            {
+                Query = @"
+            query ($id: String!) {
+                getCourseById(id: $id) {
+                    id
+                    title
+                    imageUri
+                    isBestseller
+                    ingress
+                    hours
+                    likesInProcent
+                    likes
+                }
+            }",
+                Variables = new { id = Id }
+            };
 
-        try
+        var response = await Http.PostAsJsonAsync("https://courseprovider-jsbackend.azurewebsites.net/api/graphql?", query);
+
+        if (response.IsSuccessStatusCode)
         {
-            courses = await Http.GetFromJsonAsync<CourseModel[]>(Environment.GetEnvironmentVariable("COURSES_URI"));
+            var result = await response.Content.ReadFromJsonAsync<GraphQLResponse<CourseModelWrapper>>();
+            course = result?.Data?.GetCourseById;
         }
-        catch (Exception ex) { }
+        else
+        {
+            
+            Console.WriteLine($"Error fetching course: {response.StatusCode}");
+        }
+    }
 
-
+    private class CourseModelWrapper
+    {
+        public CourseModel GetCourseById { get; set; } = new CourseModel();
     }
 
     private class CourseModel
     {
-        public int Id { get; set; }
-        public string Title { get; set; } = null!;
-        public string? ImageName { get; set; }
-        public string? Author { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string? ImageUri { get; set; }
         public bool IsBestseller { get; set; }
-        public string Hours { get; set; } = null!;
-        public string OriginalPrice { get; set; } = null!;
-        public string DiscountPrice { get; set; } = null!;
-        public string LikesInProcent { get; set; } = null!;
-        public string LikesInNumbers { get; set; } = null!;
+        public string Ingress { get; set; } = string.Empty;
+        public string Hours { get; set; } = string.Empty;
+        public string LikesInProcent { get; set; } = string.Empty;
+        public string LikesInNumbers { get; set; } = string.Empty;
+    }
+
+    private class GraphQLRequest
+    {
+        public string Query { get; set; } = string.Empty;
+        public object Variables { get; set; } = new { };
+    }
+
+    private class GraphQLResponse<T>
+    {
+        public T Data { get; set; } = default!;
     }
 }

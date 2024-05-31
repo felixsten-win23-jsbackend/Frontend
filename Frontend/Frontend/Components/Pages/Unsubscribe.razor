@@ -1,0 +1,64 @@
+﻿@page "/unsubscribe"
+
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+
+<PageTitle>Unsubscribe from Newsletter</PageTitle>
+
+<h3>Unsubscribe from Newsletter</h3>
+
+<div id="unsubscribe-page">
+    <div class="container">
+        <EditForm Model="UnsubInput" OnValidSubmit="OnValidSubmitUnsubscribeAsync" FormName="unsubscribeForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="unsubscribeEmail">Enter email to unsubscribe from newsletter</label>
+                <InputText type="email" id="unsubscribeEmail" @bind-Value="UnsubInput.Email" class="form-control" />
+                <ValidationMessage For="() => UnsubInput.Email" />
+            </div>
+
+            <button class="btn-theme-s" type="submit">Unsubscribe</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    private UnsubscribeInput UnsubInput { get; set; } = new();
+
+    private async Task OnValidSubmitUnsubscribeAsync()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(UnsubInput.Email))
+            {
+                var response = await Http.DeleteAsync($"https://subscriberprovider-jsbackend.azurewebsites.net/api/subscribers/{UnsubInput.Email}?code=6RbpdI9Mw96XxVLzUeqQgmCL7wMX-5GMzlSVzn3Gpn7eAzFuUBr_cA%3D%3D");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Subscriber unsubscribed successfully");
+                }
+                else
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error unsubscribing: {response.StatusCode}, {responseContent}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred while unsubscribing: {ex.Message}");
+        }
+    }
+
+    private class UnsubscribeInput
+    {
+        [Display(Name = "Email")]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string? Email { get; set; }
+    }
+}
